@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Callback</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Autorización completada</h1>
+      <p id="user-info"></p>
+    </div>
+
+    <script>
+      async function handleCallback() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get("code");
+        if (!code) {
+          document.getElementById("user-info").textContent =
+            "No se proporcionó ningún código de autorización.";
+          return;
+        }
+
+        const clientId = "TU_CLIENT_ID";
+        const clientSecret = "TU_CLIENT_SECRET";
+        const redirectUri =
+          "https://TU_GITHUB_USERNAME.github.io/TU_REPOSITORIO/callback.html";
+
+        try {
+          const tokenResponse = await fetch(
+            "https://discord.com/api/oauth2/token",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: new URLSearchParams({
+                client_id: clientId,
+                client_secret: clientSecret,
+                grant_type: "authorization_code",
+                code: code,
+                redirect_uri: redirectUri,
+              }),
+            }
+          );
+
+          const tokenData = await tokenResponse.json();
+          const accessToken = tokenData.access_token;
+
+          const userResponse = await fetch(
+            "https://discord.com/api/users/@me",
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            }
+          );
+
+          const userData = await userResponse.json();
+          document.getElementById(
+            "user-info"
+          ).textContent = `Hola, ${userData.username}#${userData.discriminator}. Tu correo es: ${userData.email}`;
+        } catch (error) {
+          console.error("Error al manejar el callback:", error);
+          document.getElementById("user-info").textContent =
+            "Hubo un error al procesar la autorización.";
+        }
+      }
+
+      handleCallback();
+    </script>
+  </body>
+</html>
